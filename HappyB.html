@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carta Especial</title>
+  <style>
+    body {
+      background-color: #e6f0fa; /* Azul claro */
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250"><text x="20" y="40" font-size="25">💖</text><text x="120" y="60" font-size="20">❤️</text><text x="200" y="80" font-size="18">💕</text><text x="40" y="130" font-size="22">💞</text><text x="150" y="150" font-size="20">💘</text><text x="80" y="200" font-size="25">🥰</text><text x="180" y="20" font-size="22">🌹</text><text x="60" y="100" font-size="20">💖</text><text x="220" y="180" font-size="25">❤️</text><text x="20" y="220" font-size="18">💕</text><text x="130" y="80" font-size="20">💞</text><text x="200" y="140" font-size="22">💘</text><text x="50" y="170" font-size="25">🥰</text><text x="150" y="210" font-size="20">🌹</text></svg>');
+      background-repeat: repeat;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .section {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      display: none;
+    }
+    .active {
+      display: block;
+    }
+    h1 {
+      color: #1e90ff; /* Azul brillante */
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #555;
+      margin-bottom: 15px;
+      text-align: justify;
+      font-size: 14px;
+    }
+    .code-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 15px 0;
+    }
+    #codeInput {
+      font-size: 18px;
+      margin-right: 20px;
+      width: 60px;
+      text-align: center;
+      border: 2px solid #1e90ff; /* Borde azul */
+      border-radius: 5px;
+      padding: 5px;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+    .number-button, .back-button, .heart-button, .quiz-button, .next-button, .code-button, .end-button, .confirm-button {
+      background-color: #1e90ff; /* Azul brillante */
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .hint-text, #debugMessage, #cardGameMessage, #quizFeedback, #memoryGameMessage, #giftCountdown {
+      color: #1e90ff; /* Azul brillante */
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .question {
+      display: none;
+      text-align: left;
+      margin: 10px 0;
+      font-size: 14px;
+      color: #555;
+    }
+    .question.active {
+      display: block;
+    }
+    #reasonsList {
+      text-align: left;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+    #reasonsList ol {
+      padding-left: 20px;
+    }
+    /* Estilos para el juego de cartas (elegir la correcta) */
+    .card-game {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .card {
+      width: 80px;
+      height: 100px;
+      background-color: #1e90ff; /* Azul brillante */
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 40px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .card:hover {
+      transform: scale(1.1);
+    }
+    .card.revealed {
+      background-color: #fff;
+    }
+    /* Estilos para el memorama */
+    .memory-game {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .memory-card {
+      width: 60px;
+      height: 60px;
+      background-color: #1e90ff; /* Azul brillante */
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 30px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .memory-card.flipped, .memory-card.matched {
+      background-color: #fff;
+      transform: rotateY(180deg);
+    }
+    .memory-card.matched {
+      background-color: #add8e6; /* Azul claro */
+    }
+  </style>
+</head>
+<body>
+  <!-- Login -->
+  <div class="section active" id="login">
+    <h1>✨ Encuentra la contraseña ✨</h1>
+    <p>Hace tiempo retomamos nuestras charlas después de un silencio largo. Fue como volver a encender un juego favorito 🎮. ¿Recuerdas cuándo fue? Ese número es la llave que necesitas. ¡Adivina bien!</p>
+    <div class="code-container">
+      <input type="tel" id="codeInput" maxlength="4" placeholder="----">
+      <div class="keypad">
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '1'">1</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '2'">2</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '3'">3</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '4'">4</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '5'">5</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '6'">6</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '7'">7</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '8'">8</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '9'">9</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value += '0'">0</button>
+        <button class="number-button" onclick="document.getElementById('codeInput').value = ''">⌫</button>
+        <button class="number-button" onclick="checkCode()">✔️</button>
+      </div>
+    </div>
+    <p class="hint-text" id="hintMessage" style="display: none;">Pista: Es el año en que volvimos a tener contacto.</p>
+    <p id="debugMessage" style="display: none;"></p>
+  </div>
+
+  <!-- Juego de cartas (Elegir la correcta) -->
+  <div class="section" id="cardGame">
+    <h1>🎉 ¡Elige la carta correcta! 🎉</h1>
+    <p>Escoge la carta que crees que es la correcta para desbloquear mi mensaje especial. 💌</p>
+    <p id="cardGameMessage"></p>
+    <div class="card-game" id="cardGameContainer">
+      <!-- Las cartas se generarán dinámicamente con JavaScript -->
+    </div>
+    <button class="back-button" onclick="showSection('login')">⬅️ Regresar</button>
+  </div>
+
+  <!-- Carta -->
+  <div class="section" id="card">
+    <h1>Para el chico que ilumina mis días,</h1>
+    <p>Hoy es un día especial, aunque sé que no eres de grandes celebraciones 🎉, quiero aprovecharlo para expresarte lo que muchas veces no me atrevo a decir. No solo porque sea tu cumpleaños 🎂, sino porque creo que es un buen momento para mostrarte lo importante que eres para mí. Tal vez las palabras nunca puedan reflejar al 100% lo que siento 💭, pero quiero intentarlo.</p>
+    <p>Sé que la distancia entre Cancún y la Ciudad de México no es fácil de manejar 🌎. A veces siento que, aunque intentemos acercarnos con mensajes, llamadas 📱 y pensamientos, hay algo intangible que siempre nos separa. Sin embargo, y a pesar de todo, es asombroso cómo sigues logrando iluminar mis días con la sencillez de tus palabras, de tus gestos ✨. Cada mensaje tuyo, cada sonrisa que imagino al leer tus respuestas, me llena de una emoción que hacía mucho no sentía 🥰.</p>
+    <p>En estos años en los que la vida nos ha llevado por caminos tan distintos y la distancia nos ha puesto obstáculos 🛑, lo que más valoro es la forma en que hemos seguido conectando. La forma en que, a pesar de las complicaciones, las conversaciones se sienten tan cercanas, tan reales 💬. Y eso es lo que quiero aprovechar hoy para agradecerte. Por hacerme sentir tan acompañada, por brindarme tu tiempo, por tu interés genuino y por tu capacidad de ser tan tú, a pesar de todo 💖.</p>
+    <p>Sé que a veces nos cuesta ponerle nombre a lo que sentimos, por la distancia y el hecho de no estar tan presentes a diario en la vida del otro 🚧, pero no quiero dejar pasar esta oportunidad para decirte que me haces sentir algo realmente bonito 💓. La manera en que me has mostrado, sin proponértelo, que no importa lo lejos que estemos, siempre habrá espacio para sentir algo genuino, algo real 🌟. Me has enseñado que no todo tiene que ser definido para ser especial 💫.</p>
+    <p>Lo que más me emociona es saber que a pesar de los kilómetros, siempre hay una razón para esperar tus mensajes 📲. Y cada vez que veo tu nombre en la pantalla de mi teléfono, mi corazón se acelera un poquito 💓, porque sé que detrás de esas palabras hay algo sincero y valioso. Y eso, de alguna forma, hace que la distancia se sienta menos pesada.</p>
+    <p>Aunque quizás no podamos vernos o celebrar como muchos lo harían 🎉, creo que un pequeño gesto de cariño siempre puede significar mucho 🎁. Y hoy, aunque la distancia nos lo ponga difícil, quiero que sepas que este es mi regalo para ti: un recordatorio de que alguien te valora, te piensa y te quiere cerca, aunque las circunstancias no lo permitan 🫶.</p>
+    <p>No te escribo hoy con grandes palabras de amor, porque sé que no es el momento ni el lugar para eso 💭, pero sí quiero que sepas lo mucho que significas para mí 🌹. Eres alguien que ha logrado ocupar un espacio importante en mi vida y quiero seguir alimentando esa conexión, aunque sea a través de estos pequeños detalles 💌.</p>
+    <p>Espero que, de alguna manera, este mensaje logre transmitir un poco de lo que siento por ti 💖. Y aunque las palabras nunca serán suficientes, quiero que sepas que hay una persona aquí que valora cada mensaje, cada conversación y cada momento que hemos compartido 🌟. Gracias por ser tan especial para mí 😊.</p>
+    <p>Feliz cumpleaños 🎂. No importa cuántos kilómetros nos separen, siempre estaré aquí, esperando tu próximo mensaje con una sonrisa en el rostro 🥰.</p>
+    <button class="heart-button" onclick="window.open('https://open.spotify.com/playlist/01KpSpdp9S2j4Axih5LbYE?si=nRQOw0BpRpWLL97Mh0QjWw&pi=lP29di2US2-fs', '_blank')">🎶 Escucha nuestra playlist 🎶</button>
+    <button class="heart-button" onclick="showSection('reasons')">✨ 20 razones por las que me encantas ✨</button>
+    <button class="back-button" onclick="showSection('cardGame')">⬅️ Regresar</button>
+  </div>
+
+  <!-- Juego de las 20 razones -->
+  <div class="section" id="reasons">
+    <h1>20 Preguntas para 20 Razones ✨</h1>
+    <p>¡Responde estas preguntas sobre nosotros y descubre por qué me encantas!</p>
+    
+    <!-- Pregunta 1 -->
+    <div class="question active" id="question1">
+      <p>1. ¿Cuál es mi color favorito?</p>
+      <div id="options1"></div>
+    </div>
+
+    <!-- Pregunta 2 -->
+    <div class="question" id="question2">
+      <p>2. ¿Qué tipo de películas prefiero?</p>
+      <div id="options2"></div>
+    </div>
+
+    <!-- Pregunta 3 -->
+    <div class="question" id="question3">
+      <p>3. ¿Qué estudié?</p>
+      <div id="options3"></div>
+    </div>
+
+    <!-- Pregunta 4 -->
+    <div class="question" id="question4">
+      <p>4. ¿Cómo se llama mi gata?</p>
+      <div id="options4"></div>
+    </div>
+
+    <!-- Pregunta 5 -->
+    <div class="question" id="question5">
+      <p>5. ¿Cómo le digo a mi gata?</p>
+      <div id="options5"></div>
+    </div>
+
+    <!-- Pregunta 6 -->
+    <div class="question" id="question6">
+      <p>6. ¿Qué es algo que siempre recuerdo (la mayoría de las veces)?</p>
+      <div id="options6"></div>
+    </div>
+
+    <!-- Pregunta 7 -->
+    <div class="question" id="question7">
+      <p>7. ¿Qué instrumento me gusta tocar?</p>
+      <div id="options7"></div>
+    </div>
+
+    <!-- Pregunta 8 -->
+    <div class="question" id="question8">
+      <p>8. ¿Qué me gusta hacer como hobbie?</p>
+      <div id="options8"></div>
+    </div>
+
+    <!-- Pregunta 9 -->
+    <div class="question" id="question9">
+      <p>9. ¿Qué es lo que me gusta más de nuestras conversaciones?</p>
+      <div id="options9"></div>
+    </div>
+
+    <!-- Pregunta 10 -->
+    <div class="question" id="question10">
+      <p>10. ¿Qué animales me gustan más?</p>
+      <div id="options10"></div>
+    </div>
+
+    <!-- Pregunta 11 -->
+    <div class="question" id="question11">
+      <p>11. ¿Qué es lo que más me atrae de ti?</p>
+      <div id="options11"></div>
+    </div>
+
+    <!-- Pregunta 12 -->
+    <div class="question" id="question12">
+      <p>12. Si fueras un objeto en mi vida, ¿qué serías?</p>
+      <div id="options12"></div>
+    </div>
+
+    <!-- Pregunta 13 -->
+    <div class="question" id="question13">
+      <p>13. Película de Disney que nos gusta a ambos (según yo)...</p>
+      <div id="options13"></div>
+    </div>
+
+    <!-- Pregunta 14 -->
+    <div class="question" id="question14">
+      <p>14. ¿A quién siempre le cuento todo?</p>
+      <div id="options14"></div>
+    </div>
+
+    <!-- Pregunta 15 -->
+    <div class="question" id="question15">
+      <p>15. ¿A quién de los dos no le gusta recibir sorpresas 🙄?</p>
+      <div id="options15"></div>
+    </div>
+
+    <!-- Pregunta 16 -->
+    <div class="question" id="question16">
+      <p>16. ¿A quién le gusta dar sorpresas 😅?</p>
+      <div id="options16"></div>
+    </div>
+
+    <!-- Pregunta 17 -->
+    <div class="question" id="question17">
+      <p>17. Nombre de mi perrito?</p>
+      <div id="options17"></div>
+    </div>
+
+    <!-- Pregunta 18 -->
+    <div class="question" id="question18">
+      <p>18. ¿Me gusta más el sabor dulce o salado?</p>
+      <div id="options18"></div>
+    </div>
+
+    <!-- Pregunta 19 -->
+    <div class="question" id="question19">
+      <p>19. ¿Qué hace Fer después de ver una película de miedo?</p>
+      <div id="options19"></div>
+    </div>
+
+    <!-- Pregunta 20 -->
+    <div class="question" id="question20">
+      <p>20. ¿Lo que más aprecio en una persona?</p>
+      <div id="options20"></div>
+    </div>
+
+    <!-- Lista de razones -->
+    <div id="reasonsList">
+      <h1 style="font-size: 16px; color: #1e90ff;">Razones por las que me encantas:</h1>
+      <ol id="reasonsListItems"></ol>
+      <button class="next-button" id="continueToMemory" style="display: none;" onclick="showSection('memoryGameSection')">Continuar al Memorama 🎲</button>
+    </div>
+
+    <p id="quizFeedback"></p>
+    <button class="back-button" onclick="showSection('card')" style="margin-top: 10px;">⬅️ Regresar</button>
+  </div>
+
+  <!-- Memorama -->
+  <div class="section" id="memoryGameSection">
+    <h1>🎉 ¡Juega al memorama! 🎉</h1>
+    <p>Encuentra los 5 pares de emojis. Tienes 12 intentos. ¡Suerte! 💕</p>
+    <p id="memoryGameMessage">Intentos restantes: 12</p>
+    <div class="memory-game" id="memoryGame">
+      <!-- Las cartas se generarán dinámicamente con JavaScript -->
+    </div>
+    <div id="giftContent" style="display: none;">
+      <p>¿Ya tienes tu consola encendida? Confirma para ver tu regalo. 🎁</p>
+      <button class="confirm-button" onclick="showGift()">Confirmar</button>
+      <div id="giftReveal" style="display: none;">
+        <p>¡Aquí tienes! Usa este código en la tienda de Xbox. 🎮</p>
+        <button class="code-button">YXPR6-39GM9-CJR2X-CT7C2-WD3KZ</button>
+        <p id="giftCountdown">Mostrando botón en: 5</p>
+        <button class="end-button" id="playButton" style="display: none;" onclick="window.open('https://wa.me/+5215539607034?text=¿Jugamos?%20🩷', '_blank')">¿Jugamos? 💖</button>
+      </div>
+    </div>
+    <button class="back-button" onclick="showSection('reasons')">⬅️ Regresar</button>
+  </div>
+
+  <script>
+    // Variable para rastrear la última pregunta completada
+    let currentQuestion = 1;
+    let quizCompleted = false;
+
+    // Función para mostrar secciones
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
+      if (sectionId === 'cardGame') {
+        initCardGame();
+      }
+      if (sectionId === 'memoryGameSection') {
+        initMemoryGame();
+      }
+      if (sectionId === 'reasons') {
+        initQuiz();
+        // Mostrar la última pregunta completada o el botón si el quiz está completo
+        document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+        if (quizCompleted) {
+          document.getElementById('continueToMemory').style.display = 'block';
+        } else {
+          document.getElementById('question' + currentQuestion).classList.add('active');
+        }
+      }
+    }
+
+    // Verificar el código en la sección de login
+    function checkCode() {
+      var code = document.getElementById('codeInput').value;
+      if (code === '2021') {
+        showSection('cardGame');
+      } else {
+        document.getElementById('hintMessage').style.display = 'block';
+        document.getElementById('debugMessage').style.display = 'block';
+        document.getElementById('debugMessage').innerText = 'Código incorrecto. Intenta de nuevo.';
+        document.getElementById('codeInput').value = '';
+      }
+    }
+
+    // Juego de cartas (Elegir la correcta)
+    let cards = [
+      { emoji: '💖', correct: true },
+      { emoji: '❌', correct: false },
+      { emoji: '❌', correct: false }
+    ];
+
+    function initCardGame() {
+      document.getElementById('cardGameMessage').innerText = '';
+      cards = cards.sort(() => Math.random() - 0.5); // Mezclar las cartas
+      const cardContainer = document.getElementById('cardGameContainer');
+      cardContainer.innerHTML = '';
+      cards.forEach((card, index) => {
+        const cardElement = document.createElement('div');
+        cardElement.classList.add('card');
+        cardElement.innerText = '❓'; // Mostrar inicialmente ❓
+        cardElement.dataset.index = index;
+        cardElement.onclick = () => chooseCard(cardElement, index);
+        cardContainer.appendChild(cardElement);
+      });
+    }
+
+    function chooseCard(cardElement, index) {
+      const card = cards[index];
+      cardElement.classList.add('revealed');
+      cardElement.innerText = card.emoji; // Revelar el emoji real
+      if (card.correct) {
+        document.getElementById('cardGameMessage').innerText = '¡Correcto! Aquí está tu carta especial. 💖';
+        setTimeout(() => showSection('card'), 1000);
+      } else {
+        document.getElementById('cardGameMessage').innerText = '¡No! Intenta de nuevo. 😜';
+        setTimeout(() => initCardGame(), 1000);
+      }
+    }
+
+    // Juego de las 20 razones
+    const questions = [
+      { correct: 'Rosa', incorrect: 'Azul', reason: 'Esa sonrisa que imagino cuando me hablas por teléfono ilumina mi mundo. 😍', feedback: '¡Nop! ¿Azul? ¿En serio? Mi mundo es más bien rosa, como mi corazón cuando pienso en ti. 💖 Intenta de nuevo.' },
+      { correct: 'Caricaturas', incorrect: 'Acción', reason: 'Me haces sentir segura con esas charlas largas. ❤️', feedback: '¡Jaja, no! ¿Acción? Soy más de reírme con caricaturas que de estar al borde del asiento. 😅 Vuelve a intentarlo.' },
+      { correct: 'Psicología', incorrect: 'Ingeniería', reason: 'Tu risa es como música que nunca quiero dejar de escuchar. 🎶', feedback: '¡Uy, no! ¿Ingeniería? No, no, soy más de entender mentes que de construir puentes. 🧠 Prueba otra vez.' },
+      { correct: 'Samantha', incorrect: 'Luna', reason: 'La forma en que me escuchas hace que sienta que soy lo primero para ti. 🌙', feedback: '¡Nooo! Luna es muy bonito, pero mi gatita tiene un nombre más especial. 🐾 ¿Te doy otra oportunidad?' },
+      { correct: 'Chiri', incorrect: 'Mimi', reason: 'Me encanta cómo me haces reír incluso en mis peores días. 😺', feedback: '¡Jaja, no! Mimi suena cute, pero mi gatita tiene un apodo más único. 😺 Vamos, intenta de nuevo.' },
+      { correct: 'Mis sueños', incorrect: 'Mis tareas', reason: 'Tu paciencia conmigo es algo que valoro más de lo que las palabras pueden decir. 💭', feedback: '¡Nop! ¿Mis tareas? Ojalá, pero soy más de recordar mis sueños locos. 💤 Prueba otra vez.' },
+      { correct: 'Ukelele', incorrect: 'Guitarra', reason: 'Me haces sentir que todo estará bien, incluso cuando todo parece ir mal. 🎸', feedback: '¡No, no! La guitarra es cool, pero yo soy más de algo pequeño y dulce. 🎶 ¿Otra oportunidad?' },
+      { correct: 'Leer', incorrect: 'Cocinar', reason: 'La forma en que me hablas de tus sueños me inspira a soñar más grande. 📚', feedback: '¡Uy, no! Cocinar es divertido, pero prefiero perderme en un buen libro. 📖 Intenta de nuevo.' },
+      { correct: 'La cercanía a pesar de la distancia', incorrect: 'Las bromas', reason: 'Me encanta cómo compartes tus pensamientos más profundos conmigo. 💬', feedback: '¡Jaja, no! Las bromas están buenas, pero hay algo que valoro más de nuestras charlas. 💬 ¿Qué será?' },
+      { correct: 'Todos', incorrect: 'Solo perros', reason: 'Tu voz tiene un efecto calmante que me hace olvidar mis preocupaciones. 🐾', feedback: '¡Nooo! ¿Solo perros? Mi corazón es más grande que eso, me gustan todos. 🐾 Prueba otra vez.' },
+      { correct: 'Su determinación', incorrect: 'Tu habilidad para volar', reason: 'Me haces sentir que no hay distancia que pueda separarnos de verdad. 💪', feedback: '¡Jaja, no! ¿Volar? Ojalá, pero hay algo más real que me encanta de ti. 💪 Intenta de nuevo.' },
+      { correct: 'Un faro o una estrella', incorrect: 'Un libro', reason: 'La forma en que me animas a ser yo misma es un regalo que no tiene precio. 🌟', feedback: '¡Nop! Un libro está bien, pero tú eres algo que me guía e ilumina. 🌟 ¿Otra oportunidad?' },
+      { correct: 'Hércules', incorrect: 'El Rey León', reason: 'Me encanta cómo siempre encuentras la manera de sorprenderme. 🎬', feedback: '¡No, no! El Rey León es genial, pero hay otra que creo que nos une más. 🎬 Prueba otra vez.' },
+      { correct: 'A mi hermana y a Ara', incorrect: 'A mi mamá y a mi papá', reason: 'Tu sentido del humor es una de las cosas que más me hacen feliz. 😄', feedback: '¡Uy, no! Mis papás son geniales, pero hay otras personas que saben todos mis secretos. 🤫 Intenta de nuevo.' },
+      { correct: 'A Javier', incorrect: 'A Fer', reason: 'Me haces sentir que cada día contigo es una aventura nueva. 🎁', feedback: '¡Jaja, no! ¿Yo? A mí me encantan las sorpresas, pero alguien aquí no es tan fan. 🎁 ¿Quién será?' },
+      { correct: 'A Fer', incorrect: 'A Javier', reason: 'La forma en que me apoyas en todo lo que hago me da confianza. 🎉', feedback: '¡Nooo! ¿Javier? Él prefiere evitarlas, pero yo soy la reina de las sorpresas. 🎉 Prueba otra vez.' },
+      { correct: 'Koe', incorrect: 'Max', reason: 'Me encanta cómo me haces sentir especial con los detalles más pequeños. 🐶', feedback: '¡Nop! Max es un nombre lindo, pero mi perrito tiene un nombre más especial. 🐶 Intenta de nuevo.' },
+      { correct: 'Dulce 100%', incorrect: 'Salado', reason: 'Tu sinceridad es algo que admiro profundamente. 🍬', feedback: '¡Jaja, no! ¿Salado? Mi vida es puro azúcar, soy 100% dulce. 🍬 ¿Otra oportunidad?' },
+      { correct: 'Ver caricaturas', incorrect: 'Dormir', reason: 'Me haces sentir que soy suficiente, tal como soy. 📺', feedback: '¡No, no! ¿Dormir? ¡Imposible! Necesito algo para calmarme después de tanto susto. 📺 Prueba otra vez.' },
+      { correct: 'Honestidad', incorrect: 'Que pueda hablar con los árboles', reason: 'Eres mi persona favorita en el mundo, y no imagino mi vida sin ti. 💖', feedback: '¡Jaja, no! ¿Hablar con los árboles? Eso sería genial, pero valoro algo más real. 💖 Intenta de nuevo.' }
+    ];
+
+    function initQuiz() {
+      questions.forEach((q, index) => {
+        const questionNum = index + 1;
+        const optionsContainer = document.getElementById('options' + questionNum);
+        optionsContainer.innerHTML = '';
+        const options = [
+          { text: q.correct, isCorrect: true },
+          { text: q.incorrect, isCorrect: false }
+        ].sort(() => Math.random() - 0.5); // Mezclar las opciones
+        options.forEach(option => {
+          const button = document.createElement('button');
+          button.classList.add('quiz-button');
+          button.innerText = option.text;
+          button.onclick = () => checkAnswer(questionNum, option.text);
+          optionsContainer.appendChild(button);
+        });
+      });
+    }
+
+    function checkAnswer(questionNum, answer) {
+      const feedback = document.getElementById('quizFeedback');
+      const reasonsList = document.getElementById('reasonsListItems');
+      const q = questions[questionNum - 1];
+
+      if (answer === q.correct) {
+        feedback.innerText = '¡Correcto!';
+        reasonsList.innerHTML += `<li>${q.reason}</li>`;
+        currentQuestion = questionNum + 1;
+        if (questionNum < 20) {
+          showNextQuestion(questionNum + 1);
+        } else {
+          quizCompleted = true;
+          document.getElementById('continueToMemory').style.display = 'block';
+          document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+        }
+      } else {
+        feedback.innerText = q.feedback;
+      }
+    }
+
+    function showNextQuestion(nextNum) {
+      document.getElementById('quizFeedback').innerText = '';
+      document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+      document.getElementById('question' + nextNum).classList.add('active');
+    }
+
+    // Juego de memorama
+    let memoryCards = [
+      { id: 1, emoji: '💕' },
+      { id: 2, emoji: '💕' },
+      { id: 3, emoji: '💖' },
+      { id: 4, emoji: '💖' },
+      { id: 5, emoji: '❤️' },
+      { id: 6, emoji: '❤️' },
+      { id: 7, emoji: '🌹' },
+      { id: 8, emoji: '🌹' },
+      { id: 9, emoji: '💘' },
+      { id: 10, emoji: '💘' },
+      { id: 11, emoji: '🥰' },
+      { id: 12, emoji: '🥰' }
+    ];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let attemptsLeft = 12;
+
+    function initMemoryGame() {
+      attemptsLeft = 12;
+      matchedPairs = 0;
+      flippedCards = [];
+      document.getElementById('memoryGameMessage').innerText = `Intentos restantes: ${attemptsLeft}`;
+      document.getElementById('giftContent').style.display = 'none';
+      const gameContainer = document.getElementById('memoryGame');
+      gameContainer.innerHTML = '';
+      memoryCards = memoryCards.sort(() => Math.random() - 0.5); // Mezclar las cartas
+      memoryCards.forEach((card, index) => {
+        const cardElement = document.createElement('div');
+        cardElement.classList.add('memory-card');
+        cardElement.dataset.id = index;
+        cardElement.innerText = '';
+        cardElement.addEventListener('click', () => flipCard(cardElement, card));
+        gameContainer.appendChild(cardElement);
+      });
+    }
+
+    function flipCard(cardElement, card) {
+      if (flippedCards.length < 2 && !cardElement.classList.contains('flipped') && !cardElement.classList.contains('matched')) {
+        cardElement.classList.add('flipped');
+        cardElement.innerText = card.emoji;
+        flippedCards.push({ element: cardElement, emoji: card.emoji });
+
+        if (flippedCards.length === 2) {
+          attemptsLeft--;
+          document.getElementById('memoryGameMessage').innerText = `Intentos restantes: ${attemptsLeft}`;
+          if (flippedCards[0].emoji === flippedCards[1].emoji) {
+            flippedCards.forEach(card => card.element.classList.add('matched'));
+            matchedPairs++;
+            flippedCards = [];
+            if (matchedPairs === 6) { // 6 pares ahora
+              document.getElementById('memoryGameMessage').innerText = '¡Ganaste! 🎮';
+              document.getElementById('memoryGame').style.display = 'none';
+              document.getElementById('giftContent').style.display = 'block';
+            }
+          } else {
+            setTimeout(() => {
+              flippedCards.forEach(card => {
+                card.element.classList.remove('flipped');
+                card.element.innerText = '';
+              });
+              flippedCards = [];
+            }, 1000);
+          }
+
+          if (attemptsLeft === 0 && matchedPairs < 6) {
+            document.getElementById('memoryGameMessage').innerText = '¡Se acabaron los intentos! Intenta de nuevo. 😜';
+            setTimeout(() => initMemoryGame(), 1000);
+          }
+        }
+      }
+    }
+
+    // Mostrar el código de Xbox y cuenta regresiva para el botón "¿Jugamos?"
+    function showGift() {
+      document.getElementById('giftReveal').style.display = 'block';
+      document.querySelector('.confirm-button').style.display = 'none';
+      let giftCountdownTime = 5;
+      const giftCountdownElement = document.getElementById('giftCountdown');
+      const playButton = document.getElementById('playButton');
+      const giftCountdownInterval = setInterval(() => {
+        giftCountdownTime--;
+        giftCountdownElement.innerText = `Mostrando botón en: ${giftCountdownTime}`;
+        if (giftCountdownTime <= 0) {
+          clearInterval(giftCountdownInterval);
+          giftCountdownElement.style.display = 'none';
+          playButton.style.display = 'block';
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
